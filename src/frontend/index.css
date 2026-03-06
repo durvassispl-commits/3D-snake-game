@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque-VF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sora";
+  src: url("/assets/fonts/Sora-VF.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/assets/fonts/GeistMono-VF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+    /* Cyberpunk dark theme as default */
+    --background: 0.1 0.02 264;
+    --foreground: 0.96 0.02 200;
+    --card: 0.14 0.03 264;
+    --card-foreground: 0.96 0.02 200;
+    --popover: 0.12 0.03 264;
+    --popover-foreground: 0.96 0.02 200;
+    --primary: 0.75 0.2 190;
+    --primary-foreground: 0.08 0.02 264;
+    --secondary: 0.2 0.04 264;
+    --secondary-foreground: 0.96 0.02 200;
+    --muted: 0.18 0.03 264;
+    --muted-foreground: 0.6 0.05 230;
+    --accent: 0.72 0.22 145;
+    --accent-foreground: 0.08 0.02 264;
+    --destructive: 0.65 0.22 30;
+    --destructive-foreground: 0.96 0 0;
+    --border: 0.28 0.06 264;
+    --input: 0.22 0.05 264;
+    --ring: 0.75 0.2 190;
+
+    /* Game-specific tokens */
+    --snake-head: #00e5ff;
+    --snake-body: #00c853;
+    --food-color: #ff6d00;
+    --grid-bg: #050510;
+    --hud-bg: rgba(5, 5, 20, 0.85);
+    --neon-glow: 0 0 20px rgba(0, 229, 255, 0.5), 0 0 40px rgba(0, 229, 255, 0.2);
+    --green-glow: 0 0 20px rgba(0, 200, 83, 0.5), 0 0 40px rgba(0, 200, 83, 0.2);
+
+    --chart-1: 0.75 0.2 190;
+    --chart-2: 0.72 0.22 145;
+    --chart-3: 0.65 0.22 30;
+    --chart-4: 0.7 0.2 280;
+    --chart-5: 0.8 0.15 60;
+    --sidebar: 0.12 0.03 264;
+    --sidebar-foreground: 0.96 0.02 200;
+    --sidebar-primary: 0.75 0.2 190;
+    --sidebar-primary-foreground: 0.08 0.02 264;
+    --sidebar-accent: 0.2 0.04 264;
+    --sidebar-accent-foreground: 0.96 0.02 200;
+    --sidebar-border: 0.28 0.06 264;
+    --sidebar-ring: 0.75 0.2 190;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Sora", sans-serif;
+    overflow: hidden;
+  }
+}
+
+/* Neon text effects */
+.neon-text {
+  color: #00e5ff;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.8), 0 0 30px rgba(0, 229, 255, 0.4), 0 0 60px rgba(0, 229, 255, 0.2);
+}
+
+.neon-green {
+  color: #00c853;
+  text-shadow: 0 0 10px rgba(0, 200, 83, 0.8), 0 0 30px rgba(0, 200, 83, 0.4);
+}
+
+/* Scanline overlay effect */
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* HUD panel glass effect */
+.hud-panel {
+  background: rgba(5, 5, 25, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(0, 229, 255, 0.1);
+}
+
+/* Cyberpunk button */
+.cyber-btn {
+  position: relative;
+  background: transparent;
+  border: 1px solid rgba(0, 229, 255, 0.6);
+  color: #00e5ff;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.1), inset 0 0 15px rgba(0, 229, 255, 0.05);
+  overflow: hidden;
+}
+
+.cyber-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.15) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cyber-btn:hover::before {
+  opacity: 1;
+}
+
+.cyber-btn:hover {
+  border-color: rgba(0, 229, 255, 1);
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.4), inset 0 0 25px rgba(0, 229, 255, 0.1);
+  color: #ffffff;
+}
+
+.cyber-btn:active {
+  transform: scale(0.97);
+}
+
+/* D-pad button */
+.dpad-btn {
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  color: rgba(0, 229, 255, 0.8);
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.dpad-btn:hover {
+  background: rgba(0, 229, 255, 0.18);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #00e5ff;
+}
+
+.dpad-btn:active {
+  background: rgba(0, 229, 255, 0.3);
+  transform: scale(0.92);
+}
+
+/* Game overlay */
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(5, 5, 20, 0.92) 0%, rgba(2, 2, 10, 0.97) 100%);
+  z-index: 20;
+}
+
+/* Score digit display */
+.score-display {
+  font-family: "Geist Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* Leaderboard row hover */
+.lb-row {
+  transition: background 0.15s ease;
+}
+
+.lb-row:hover {
+  background: rgba(0, 229, 255, 0.06);
+}
+
+/* Pulsing border animation for name input */
+@keyframes borderPulse {
+  0%, 100% { border-color: rgba(0, 229, 255, 0.4); box-shadow: 0 0 10px rgba(0, 229, 255, 0.1); }
+  50% { border-color: rgba(0, 229, 255, 0.8); box-shadow: 0 0 20px rgba(0, 229, 255, 0.3); }
+}
+
+.input-cyber {
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  color: #ffffff;
+  font-family: "Sora", sans-serif;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.input-cyber:focus {
+  animation: borderPulse 2s infinite;
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.input-cyber::placeholder {
+  color: rgba(0, 229, 255, 0.3);
+}
