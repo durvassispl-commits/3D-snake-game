@@ -1,8 +1,8 @@
-import { Box, Grid, Sphere } from "@react-three/drei";
+import { Box, Cylinder, Grid, Sphere } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import { BoxGeometry } from "three";
-import type { Mesh } from "three";
+import type { Group, Mesh } from "three";
 import type { Position } from "../hooks/useSnakeGame";
 
 // Grid size constant - must match useSnakeGame
@@ -13,32 +13,61 @@ interface FoodProps {
   position: Position;
 }
 
-function FoodMesh({ position }: FoodProps) {
-  const meshRef = useRef<Mesh>(null);
+/** Apple made from R3F primitives: red body, brown stem, green leaf */
+function AppleMesh({ position }: FoodProps) {
+  const groupRef = useRef<Group>(null);
   const time = useRef(0);
 
   useFrame((_, delta) => {
-    if (!meshRef.current) return;
-    time.current += delta * 2.5;
-    const scale = 0.38 + Math.sin(time.current) * 0.08;
-    meshRef.current.scale.setScalar(scale);
-    meshRef.current.rotation.y += delta * 1.5;
+    if (!groupRef.current) return;
+    time.current += delta * 2;
+    // Gentle hover bob + rotation
+    groupRef.current.position.y = 0.55 + Math.sin(time.current) * 0.07;
+    groupRef.current.rotation.y += delta * 1.2;
   });
 
+  const px = position.x - OFFSET;
+  const pz = position.y - OFFSET;
+
   return (
-    <Sphere
-      ref={meshRef}
-      args={[0.38, 16, 16]}
-      position={[position.x - OFFSET, 0.5, position.y - OFFSET]}
-    >
-      <meshStandardMaterial
-        color="#ff6d00"
-        emissive="#ff3d00"
-        emissiveIntensity={1.8}
-        roughness={0.1}
-        metalness={0.3}
-      />
-    </Sphere>
+    <group ref={groupRef} position={[px, 0.55, pz]}>
+      {/* Apple body */}
+      <Sphere args={[0.38, 20, 20]} position={[0, 0, 0]}>
+        <meshStandardMaterial
+          color="#d32f2f"
+          emissive="#b71c1c"
+          emissiveIntensity={0.6}
+          roughness={0.25}
+          metalness={0.15}
+        />
+      </Sphere>
+
+      {/* Subtle indent at top (darker sphere) */}
+      <Sphere args={[0.13, 12, 12]} position={[0, 0.3, 0]}>
+        <meshStandardMaterial color="#b71c1c" roughness={0.5} metalness={0.0} />
+      </Sphere>
+
+      {/* Stem */}
+      <Cylinder args={[0.025, 0.035, 0.22, 8]} position={[0.04, 0.49, 0]}>
+        <meshStandardMaterial color="#4e342e" roughness={0.8} metalness={0} />
+      </Cylinder>
+
+      {/* Leaf (thin squished sphere) */}
+      <Sphere
+        args={[0.14, 10, 8]}
+        position={[0.16, 0.54, 0]}
+        scale={[1, 0.25, 0.5]}
+        rotation={[0, 0, -0.4]}
+      >
+        <meshStandardMaterial
+          color="#388e3c"
+          emissive="#1b5e20"
+          emissiveIntensity={0.4}
+          roughness={0.4}
+          metalness={0}
+        />
+      </Sphere>
+    </group>
   );
 }
 
@@ -156,7 +185,7 @@ function SceneContent({ snake, food }: SnakeSceneProps) {
           totalLength={snake.length}
         />
       ))}
-      <FoodMesh position={food} />
+      <AppleMesh position={food} />
     </>
   );
 }

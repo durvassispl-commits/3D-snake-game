@@ -47,6 +47,11 @@ const DELTA: Record<Direction, { dx: number; dy: number }> = {
   RIGHT: { dx: 1, dy: 0 },
 };
 
+// Wrap a coordinate around the grid (teleport on border crossing)
+function wrap(val: number): number {
+  return ((val % GRID_SIZE) + GRID_SIZE) % GRID_SIZE;
+}
+
 export interface SnakeGameState {
   snake: Position[];
   food: Position;
@@ -72,6 +77,10 @@ export function useSnakeGame() {
   const scoreRef = useRef(0);
   const gameStateRef = useRef<GameState>("START");
 
+  // Sound event callbacks (set from outside)
+  const onEatRef = useRef<() => void>(() => {});
+  const onGameOverRef = useRef<() => void>(() => {});
+
   // Keep refs in sync
   useEffect(() => {
     snakeRef.current = snake;
@@ -88,6 +97,14 @@ export function useSnakeGame() {
   useEffect(() => {
     gameStateRef.current = gameState;
   }, [gameState]);
+
+  const setOnEat = useCallback((fn: () => void) => {
+    onEatRef.current = fn;
+  }, []);
+
+  const setOnGameOver = useCallback((fn: () => void) => {
+    onGameOverRef.current = fn;
+  }, []);
 
   const changeDirection = useCallback((newDir: Direction) => {
     if (newDir === OPPOSITE[directionRef.current]) return;
@@ -109,6 +126,22 @@ export function useSnakeGame() {
     scoreRef.current = 0;
     setGameState("PLAYING");
     gameStateRef.current = "PLAYING";
+  }, []);
+
+  const returnToStart = useCallback(() => {
+    const newSnake = buildInitialSnake();
+    const newFood = randomFood(newSnake);
+    setSnake(newSnake);
+    setFood(newFood);
+    setScore(0);
+    setDirection("RIGHT");
+    directionRef.current = "RIGHT";
+    pendingDir.current = null;
+    snakeRef.current = newSnake;
+    foodRef.current = newFood;
+    scoreRef.current = 0;
+    setGameState("START");
+    gameStateRef.current = "START";
   }, []);
 
   // Keyboard listener
@@ -195,19 +228,12 @@ export function useSnakeGame() {
       const dir = directionRef.current;
       const head = currentSnake[currentSnake.length - 1];
       const { dx, dy } = DELTA[dir];
-      const newHead: Position = { x: head.x + dx, y: head.y + dy };
 
-      // Wall collision
-      if (
-        newHead.x < 0 ||
-        newHead.x >= GRID_SIZE ||
-        newHead.y < 0 ||
-        newHead.y >= GRID_SIZE
-      ) {
-        setGameState("GAMEOVER");
-        gameStateRef.current = "GAMEOVER";
-        return;
-      }
+      // Wrap-around: teleport to opposite side instead of game over on wall
+      const newHead: Position = {
+        x: wrap(head.x + dx),
+        y: wrap(head.y + dy),
+      };
 
       // Self collision (skip last tail piece since it moves)
       const snakeWithoutTail = currentSnake.slice(1);
@@ -217,6 +243,7 @@ export function useSnakeGame() {
       if (selfCollision) {
         setGameState("GAMEOVER");
         gameStateRef.current = "GAMEOVER";
+        onGameOverRef.current();
         return;
       }
 
@@ -233,6 +260,7 @@ export function useSnakeGame() {
         const newFood = randomFood(newSnake);
         setFood(newFood);
         foodRef.current = newFood;
+        onEatRef.current();
       } else {
         newSnake = [...currentSnake.slice(1), newHead];
       }
@@ -254,6 +282,9 @@ export function useSnakeGame() {
     setPlayerName,
     changeDirection,
     startGame,
+    returnToStart,
     gridSize: GRID_SIZE,
+    setOnEat,
+    setOnGameOver,
   };
 }

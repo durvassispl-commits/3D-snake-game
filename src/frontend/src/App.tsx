@@ -3,9 +3,12 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  DoorOpen,
   Gamepad2,
   Star,
   Trophy,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -17,6 +20,7 @@ import {
 } from "./hooks/useQueries";
 import { useSnakeGame } from "./hooks/useSnakeGame";
 import type { Direction } from "./hooks/useSnakeGame";
+import { useSound } from "./hooks/useSound";
 
 // Tabs type
 type TabKey = "game" | "leaderboard";
@@ -405,9 +409,18 @@ function GameOverScreen({
 interface HUDProps {
   score: number;
   playerName: string;
+  isMusicOn: boolean;
+  onToggleMusic: () => void;
+  onExit: () => void;
 }
 
-function HUD({ score, playerName }: HUDProps) {
+function HUD({
+  score,
+  playerName,
+  isMusicOn,
+  onToggleMusic,
+  onExit,
+}: HUDProps) {
   return (
     <div
       data-ocid="snake.score_panel"
@@ -446,6 +459,54 @@ function HUD({ score, playerName }: HUDProps) {
             {playerName}
           </p>
         </div>
+        <div
+          className="w-px h-8 self-center"
+          style={{ background: "rgba(0,229,255,0.15)" }}
+        />
+        {/* Music toggle - needs pointer-events-auto since parent is pointer-events-none */}
+        <button
+          type="button"
+          data-ocid="snake.music_toggle"
+          onClick={onToggleMusic}
+          className="pointer-events-auto flex flex-col items-center gap-0.5 transition-opacity hover:opacity-70"
+          aria-label={isMusicOn ? "Mute music" : "Unmute music"}
+        >
+          <p
+            className="text-xs tracking-widest uppercase"
+            style={{ color: "rgba(0,229,255,0.5)" }}
+          >
+            Music
+          </p>
+          {isMusicOn ? (
+            <Volume2 size={18} style={{ color: "#00e5ff" }} />
+          ) : (
+            <VolumeX size={18} style={{ color: "rgba(0,229,255,0.3)" }} />
+          )}
+        </button>
+        <div
+          className="w-px h-8 self-center"
+          style={{ background: "rgba(0,229,255,0.15)" }}
+        />
+        {/* Exit button - returns to main menu */}
+        <button
+          type="button"
+          data-ocid="game.exit_button"
+          onClick={onExit}
+          className="pointer-events-auto flex flex-col items-center gap-0.5 transition-all hover:opacity-70 group"
+          aria-label="Exit to main menu"
+        >
+          <p
+            className="text-xs tracking-widest uppercase"
+            style={{ color: "rgba(255,80,80,0.6)" }}
+          >
+            Exit
+          </p>
+          <DoorOpen
+            size={18}
+            style={{ color: "rgba(255,80,80,0.8)" }}
+            className="group-hover:text-red-400 transition-colors"
+          />
+        </button>
       </div>
     </div>
   );
@@ -538,10 +599,43 @@ export default function App() {
     setPlayerName,
     changeDirection,
     startGame,
+    returnToStart,
+    setOnEat,
+    setOnGameOver,
   } = useSnakeGame();
+
+  const { playEat, playGameOver, playBGM, stopBGM, isMusicOn, toggleMusic } =
+    useSound("/assets/dhoom_bgm.mp3");
 
   const submitScore = useSubmitScore();
   const hasSubmitted = useRef(false);
+
+  // Wire sound event callbacks into the game loop
+  useEffect(() => {
+    setOnEat(playEat);
+  }, [setOnEat, playEat]);
+
+  useEffect(() => {
+    setOnGameOver(() => {
+      stopBGM();
+      playGameOver();
+    });
+  }, [setOnGameOver, stopBGM, playGameOver]);
+
+  // Handle BGM on game state transitions
+  const prevGameState = useRef(gameState);
+  useEffect(() => {
+    if (gameState === "PLAYING" && prevGameState.current !== "PLAYING") {
+      playBGM();
+    }
+    prevGameState.current = gameState;
+  }, [gameState, playBGM]);
+
+  // Exit game and return to main menu
+  const handleExit = useCallback(() => {
+    stopBGM();
+    returnToStart();
+  }, [stopBGM, returnToStart]);
 
   // Submit score when game ends
   useEffect(() => {
@@ -583,7 +677,13 @@ export default function App() {
             transition={{ duration: 0.3 }}
             className="absolute inset-0 pointer-events-none"
           >
-            <HUD score={score} playerName={playerName} />
+            <HUD
+              score={score}
+              playerName={playerName}
+              isMusicOn={isMusicOn}
+              onToggleMusic={toggleMusic}
+              onExit={handleExit}
+            />
           </motion.div>
         )}
       </AnimatePresence>
